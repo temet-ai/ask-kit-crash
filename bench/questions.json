@@ -1,0 +1,13 @@
+{
+  "about": "The kinds of question agents answer by hand with coredumpctl, gdb and journalctl: what crashed in a window and how often, whether one program keeps crashing with the same stack, why the last crash happened and which library faulted, whose bug it is, and what the backtrace shows. The questions run against bench/fixture, four invented crashes (a program called tapestry-viewer that segfaults in libocto.so.1 three times, and glass-clock that aborts once in libglass.so.2) served by fake coredumpctl and journalctl programs. Run the bench from the kit's folder with CRASH_TOOLS_DIR set to the fixture: CRASH_TOOLS_DIR=bench/fixture/bin ask-kit kit test crash. The package and update questions need a real pacman history and are left out. The expectations were checked against the fixture. Not yet run on a model.",
+  "questions": [
+    { "id": "what-crashed", "q": "Which programs crashed between 2026-11-01 and 2026-11-10, how many times each, and with which signal?", "expect": ["tapestry-viewer", "3", "SIGSEGV", "glass-clock", "SIGABRT"] },
+    { "id": "keeps-crashing", "q": "tapestry-viewer keeps crashing. Is it the same stack each time, and when did that stack first appear?", "expect": ["2026-11-03", "octo_unfold", "same|identical"] },
+    { "id": "why-last", "q": "Why did glass-clock crash on 2026-11-08: which library faulted, and which frame is the real fault rather than the abort chain?", "expect": ["libglass\\.so\\.2", "glass_assert_fail", "abort"] },
+    { "id": "whose-bug", "q": "Is the glass-clock crash on 2026-11-08 an Omarchy bug or an upstream one?", "expect": ["upstream|libglass", "no Omarchy|nothing in the stack|not Omarchy"] },
+    { "id": "backtrace-frames", "q": "Give the backtrace of the tapestry-viewer crash on 2026-11-07 and say which frame faulted.", "expect": ["octo_unfold", "libocto\\.so\\.1", "journal"] },
+    { "id": "why-shot", "do": "why", "params": { "crash": 43555 }, "expect": ["libglass\\.so\\.2", "glass_assert_fail", "\"kind\": \"library\""] },
+    { "id": "same-shot", "do": "same", "params": { "crash": 42010 }, "expect": ["octo_unfold < octo_walk", "\"programCrashes\": 3"] },
+    { "id": "recent-shot", "do": "recent", "params": { "since": "2026-11-01", "until": "2026-11-20 23:59", "exe": "tapestry-viewer" }, "expect": ["\"groups\"", "SIGSEGV", "\"count\": 3"] }
+  ]
+}

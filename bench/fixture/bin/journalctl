@@ -1,0 +1,4 @@
+#!/bin/sh
+# Fake journalctl for the bench: prints the recorded systemd-coredump messages, and nothing for any other query.
+case "$1" in --version) echo "systemd 257 (fixture)"; exit 0;; esac
+case "$*" in *MESSAGE_ID=*) cat "$(dirname "$0")/../journal.jsonl";; esac

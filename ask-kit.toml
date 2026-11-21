@@ -1,0 +1,30 @@
+id = "temet.crash"
+name = "crash"
+version = "0.1.0"
+min_ask_kit = "0.2.0"
+platforms = ["linux"]
+requires = ["coredumpctl", "journalctl"]
+says = "why a program crashed on this Linux machine, from systemd-coredump: which programs crashed and when (by program, signal, count, first and last time), one crash in detail (signal, command line, the crashing thread's backtrace, the frame and shared library that faulted, the package that owns it and its version, kernel and out-of-memory records, what the journal said just before), whether the same stack crashed before and whether an update came first (pacman.log), whether the fault is in the program, a library, the GPU driver or the compositor, whether it is an Omarchy bug or an upstream one, and a bug report written from the facts; segfault, SIGABRT, core dump, coredumpctl, 'X keeps crashing', a 'Process crashed' notification"
+keywords = ["crash(ed|es|ing)?", "segfault", "segmentation fault", "sig(segv|abrt|trap|bus|ill|fpe)", "core dumps?", "coredumps?", "coredumpctl", "backtrace", "stack trace", "gdb", "keeps? crashing", "died", "process crashed"]
+route_hint = "why a program crashed, which programs crashed, backtraces and core dumps, whether a crash is a library, driver or compositor fault, and a bug report for one are crash; whether a service is running, why it restarted, its logs and timers, and a crash loop's unit side are ops or systemd; a failing test or a panic inside a cargo test run is rust; errors on a web page are browser; what a session did about a crash is mike"
+cite = "`pid, time` of the crash and `module + offset` or the function of the frame"
+instructions = "instructions.md"
+scripts = "scripts"
+bench = "bench/questions.json"
+acts = ["crash.gdb", "crash.writeFile"]
+
+[[settings]]
+key = "CRASH_TOOLS_DIR"
+about = "a folder searched before PATH for coredumpctl, journalctl, pacman, gdb and the other programs the kit runs; used to test against recorded output (bench/fixture/bin holds fakes of coredumpctl and journalctl). Leave it unset to read this machine"
+
+[[sources]]
+kind = "module"
+name = "crash"
+module = "crash.mjs"
+api = "api.d.ts"
+
+[[roles]]
+name = "diagnostician"
+when = "a question about why a program crashed, what keeps crashing, or what a crash's stack shows"
+patterns = ["\\b(crash|segfault|core ?dump|backtrace|sigsegv|sigabrt)\\w*", "\\bwhy did .* (die|exit|disappear)\\b"]
+instructions = "roles/diagnostician.md"

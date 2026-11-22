@@ -12,7 +12,7 @@ export const meta = {
 
 export default async function ({ crash }, { crash: sel = "last", days = 7, depth = 5 } = {}) {
   const a = await crash.analyse(sel);
-  const hist = await crash.history(a);
+  const [hist, log] = await Promise.all([crash.history(a), crash.pacmanLog()]);
   const occ = [...hist.same, a.c].sort((x, y) => x.when - y.when);
   const first = occ[0];
   const stackPkgs = new Map();
@@ -21,12 +21,10 @@ export default async function ({ crash }, { crash: sel = "last", days = 7, depth
     if (p) stackPkgs.set(p.pkg, p.version);
   }
   if (a.exePkg) stackPkgs.set(a.exePkg.pkg, a.exePkg.version);
-  const log = await crash.pacmanLog();
-  const rel = [];
-  for (const [pkg, now] of stackPkgs) {
+  const rel = await Promise.all([...stackPkgs].map(async ([pkg, now]) => {
     const ev = log.filter((e) => e.pkg === pkg && e.t <= first.when).at(-1);
-    rel.push({ package: pkg, versionNow: now, versionAtFirst: await crash.versionAt(pkg, first.when), lastChange: ev ? `${ev.action} ${ev.from ? ev.from + " -> " : ""}${ev.to} at ${crash.fmt(ev.t)}` : "before pacman.log begins" });
-  }
+    return { package: pkg, versionNow: now, versionAtFirst: await crash.versionAt(pkg, first.when), lastChange: ev ? `${ev.action} ${ev.from ? ev.from + " -> " : ""}${ev.to} at ${crash.fmt(ev.t)}` : "before pacman.log begins" };
+  }));
   const start = first.when - days * 86400_000;
   const changes = await crash.upgrades(start, first.when);
   const relNames = new Set(stackPkgs.keys());
@@ -47,7 +45,7 @@ export default async function ({ crash }, { crash: sel = "last", days = 7, depth
     occurrences: occ.slice(-15).map((c) => `${crash.fmt(c.when)} pid ${c.pid}`),
     versionsAtOccurrences: await (async () => {
       const seen = {};
-      for (const c of occ) for (const [p, v] of Object.entries(await ver(c))) (seen[p] ??= new Set()).add(v ?? "unknown");
+      for (const vs of await Promise.all(occ.map(ver))) for (const [p, v] of Object.entries(vs)) (seen[p] ??= new Set()).add(v ?? "unknown");
       return Object.fromEntries(Object.entries(seen).map(([p, v]) => [p, [...v]]));
     })(),
     occurrencesCut: Math.max(0, occ.length - 15),

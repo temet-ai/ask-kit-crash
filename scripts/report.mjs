@@ -13,9 +13,9 @@ export const meta = {
 export default async function ({ crash }, { crash: sel = "last", write, days = 7 } = {}) {
   const a = await crash.analyse(sel);
   const c = a.c;
-  const [hist, sys, k] = [await crash.history(a), await crash.system(["linux", "hyprland", "mesa"].filter(Boolean)), await crash.kernelNear(c)];
   const pkgs = [...new Set([a.faultPkg?.pkg, a.exePkg?.pkg].filter(Boolean))];
-  const info = (await Promise.all(pkgs.map((p) => crash.pkgInfo(p)))).filter(Boolean);
+  const [hist, sys, k, infoAll] = await Promise.all([crash.history(a), crash.system(["linux", "hyprland", "mesa"]), crash.kernelNear(c), Promise.all(pkgs.map((p) => crash.pkgInfo(p)))]);
+  const info = infoAll.filter(Boolean);
   const occ = [...hist.same, c].sort((x, y) => x.when - y.when);
   const first = occ[0];
   const changes = (await crash.upgrades(first.when - days * 86400_000, first.when)).filter((e) => pkgs.includes(e.pkg));

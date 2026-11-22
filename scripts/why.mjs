@@ -13,10 +13,9 @@ export const meta = {
 export default async function ({ crash }, { crash: sel = "last", exe, frames = 10 } = {}) {
   const a = await crash.analyse(sel, { exe });
   const c = a.c;
-  const [j, k, hist] = [await crash.around(c), await crash.kernelNear(c), await crash.history(a)];
-  const oom = k.lines.filter((l) => /oom|out of memory|killed process|memory cgroup/i.test(l));
   const nowPkg = a.faultPkg;
-  const atCrash = nowPkg ? await crash.versionAt(nowPkg.pkg, c.when) : null;
+  const [j, k, hist, atCrash] = await Promise.all([crash.around(c), crash.kernelNear(c), crash.history(a), nowPkg ? crash.versionAt(nowPkg.pkg, c.when) : null]);
+  const oom = k.lines.filter((l) => /oom|out of memory|killed process|memory cgroup/i.test(l));
   const unresolved = a.frames.filter((f) => f.symbol === "n/a").length;
   const notes = [];
   if (!a.frames.length) notes.push("the journal entry holds no stack (usual for a core owned by another user, or a crash before systemd-coredump could read the process)");
